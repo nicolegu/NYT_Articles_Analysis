@@ -1,0 +1,38 @@
+gitignore
+
+# Virtual environment
+venv/
+env/
+.venv/
+.env
+pyvenv.cfg
+bin/
+lib/
+include/
+
+# Python cache file
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# API keys and secrets
+config.py
+.env
+*.key
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+.log
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/

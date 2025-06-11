@@ -57,6 +57,7 @@ class NYTArticleExtractor():
         """
         try:
             all_articles = []
+            seen_ids = set()
 
             pages_needed = (results + 9) // 10 # only 10 results per page per request
 
@@ -64,7 +65,7 @@ class NYTArticleExtractor():
 
             logging.info(f"Fetching up to {results} articles across {pages_needed} pages")
 
-            for page in range(page, pages_needed):
+            for page in range(start_page, pages_needed):
                 params = {
                     'api-key': self.api_key,
                     'q': query,
@@ -87,14 +88,32 @@ class NYTArticleExtractor():
                     logging.info(f"No more articles found after page {page}")
                     break
 
-                all_articles.extend(articles)
-                logging.info(f"Retrieved {len(articles)} articles from page {page}")
+                if page > start_page:
+                    current_ids = {article.get('_id') for article in articles}
+                    overlap = current_ids.intersection(seen_ids)
+                    if overlap:
+                        logging.info(f"Page {page} has {len(overlap)} overlapping articles with previous pages")
 
+                unique_articles = []
+                duplicates = 0
+
+                for article in articles:
+                    article_id = article.get('_id')
+                    if article_id and article_id not in seen_ids:
+                        seen_ids.add(article_id)
+                        unique_articles.append(article)
+                    else:
+                        duplicates += 1
+
+                all_articles.extend(unique_articles)
+                logging.info(f"Retrieved {len(unique_articles)} unique articles from page {page}")
+
+            
                 if len(all_articles) >= results:
                     all_articles = all_articles[:results]
                     break
 
-                if page < page + pages_needed - 1:
+                if page < start_page + pages_needed - 1:
                     time.sleep(12)
 
             logging.info(f"Total articles retrieved: {len(all_articles)} for query: '{query}")
@@ -169,7 +188,7 @@ class NYTArticleExtractor():
                 else:
                     processed[field] = None
 
-        for field in self.required_fields:
+        for field in self.fields:
             if field in processed and processed[field] is None:
                 raise FieldMissingError(f"Required field '{field}' is missing from article with id: {article.get('_id', 'unknown')}")
             
